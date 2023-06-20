@@ -1,0 +1,161 @@
+import random
+import sys
+
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QPixmap, QFont, QIcon
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QHBoxLayout, QPushButton
+
+KNB = {1: "Камень",
+       2: "Ножницы",
+       3: "Бумага"}
+
+situation = "Выберите камень, ножницы или бумагу"
+user = None
+
+
+class MainWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        label = QLabel(self)
+        pixmap = QPixmap("TEST16.jpg")
+        label.setPixmap(pixmap)
+        label.setFixedSize(pixmap.width(), pixmap.height())
+        label.move(0, 0)
+
+        # Табло
+        self.label_info = QLabel()
+        font = QFont()
+        font.setPointSize(20)
+        font.setFamily("Calibri")
+        self.label_info.setFont(font)
+        self.label_info.setStyleSheet("color: white;")
+        self.label_info_layout = QHBoxLayout()
+        self.label_info_layout.addWidget(self.label_info, alignment=Qt.AlignCenter)
+        self.info_area = QWidget()
+        self.info_area.setLayout(self.label_info_layout)
+
+        # Область игрового поля
+        self.situation = QWidget()
+        self.situation.setFixedSize(750, 125)
+        self.situation.setLayout(self.create_game_field())
+        self.game_field_layout = QHBoxLayout()
+        self.game_field_layout.addWidget(self.situation)
+        self.game_field = QWidget()
+        self.game_field.setLayout(self.game_field_layout)
+
+        # Область кнопки отчистки счета
+        self.button_schet = QPushButton('Отчистка счета')
+        self.button_schet.setFixedSize(300, 25)
+        self.button_schet.clicked.connect(lambda: self.clear_score())
+        self.control_schet_layout = QHBoxLayout()
+        self.control_schet_layout.addWidget(self.button_schet, alignment=Qt.AlignRight)
+        self.control_schet = QWidget()
+        self.control_schet.setLayout(self.control_schet_layout)
+
+        # Область управления
+        self.button_kamen = QPushButton()
+        self.button_kamen.setIcon(QIcon(QPixmap("kamen.png")))
+        self.button_kamen.setIconSize(QSize(128, 128))
+        self.button_kamen.setFixedSize(128, 128)
+        self.button_kamen.clicked.connect(lambda: self.update_game(1))
+        self.button_nojnicy = QPushButton()
+        self.button_nojnicy.setIcon(QIcon(QPixmap("nojnicy.jpg")))
+        self.button_nojnicy.setIconSize(QSize(128, 128))
+        self.button_nojnicy.setFixedSize(128, 128)
+        self.button_nojnicy.clicked.connect(lambda: self.update_game(2))
+        self.button_bumaga = QPushButton()
+        self.button_bumaga.setIcon(QIcon(QPixmap("bumaga.png")))
+        self.button_bumaga.setIconSize(QSize(128, 128))
+        self.button_bumaga.setFixedSize(128, 128)
+        self.button_bumaga.clicked.connect(lambda: self.update_game(3))
+        self.control_area_layout = QHBoxLayout()
+        self.control_area_layout.addWidget(self.button_kamen, alignment=Qt.AlignVCenter)
+        self.control_area_layout.addWidget(self.button_nojnicy, alignment=Qt.AlignVCenter)
+        self.control_area_layout.addWidget(self.button_bumaga, alignment=Qt.AlignVCenter)
+        self.control_area = QWidget()
+        self.control_area.setLayout(self.control_area_layout)
+
+        # Счет
+        self.score_label = QLabel()
+        self.score_label.setText('Пользователь: 0 - 0 :Компьютер')
+        font = QFont()
+        font.setPointSize(25)
+        font.setFamily("Calibri")
+        self.score_label.setFont(font)
+        self.score_label.setStyleSheet("color: white;")
+        self.score_layout = QHBoxLayout()
+        self.score_layout.addWidget(self.score_label, alignment=Qt.AlignCenter)
+        self.score_area = QWidget()
+        self.score_area.setLayout(self.score_layout)
+
+        # Область окна программы
+        self.main_layout = QVBoxLayout()
+        self.main_layout.addWidget(self.info_area)
+        self.main_layout.addWidget(self.control_schet)
+        self.main_layout.addWidget(self.game_field)
+        self.main_layout.addWidget(self.control_area)
+        self.main_layout.addWidget(self.score_area)
+        self.main_layout.addStretch(1)
+        self.setLayout(self.main_layout)
+        self.setWindowTitle('Камень ножницы бумага')
+        self.setGeometry(575, 300, 1075, 550)
+
+        # Переменные для хранения счета
+        self.user_score = 0
+        self.computer_score = 0
+
+
+    # Ситуация
+    def create_game_field(self):
+        layout = QHBoxLayout()
+        label = QLabel(situation)
+        font = QFont()
+        font.setPointSize(25)
+        font.setFamily("Calibri")
+        label.setFont(font)
+        label.setStyleSheet("color: white;")
+        layout.addWidget(label, alignment=Qt.AlignCenter)
+        return layout
+
+    # Обновление игры
+    def update_game(self, choice):
+        global situation, user
+        computer_choice = random.randint(1, 3)
+        user = KNB[choice]
+        computer = KNB[computer_choice]
+        situation = f"Вы выбрали {user}. Компьютер выбрал {computer}."
+        result = None
+        if choice == computer_choice:
+            result = "Ничья"
+        elif (choice == 1 and computer_choice == 2) or (choice == 2 and computer_choice == 3) or (choice == 3 and computer_choice == 1):
+            result = "Вы победили!"
+            self.user_score += 1
+        else:
+            result = "Компьютер победил"
+            self.computer_score += 1
+
+        # Обновление счета
+        self.score_label.setText(f"Пользователь: {self.user_score} - {self.computer_score} :Компьютер")
+
+        # Обновление ситуации
+        situation += " " + result
+        self.label_info.setText(situation)
+
+    # Отчистка счета
+    def clear_score(self):
+        global situation, user
+        self.user_score = 0
+        self.computer_score = 0
+        self.score_label.setText('Пользователь: 0 - 0 :Компьютер')
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.close()
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
